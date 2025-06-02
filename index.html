@@ -1,0 +1,671 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Calendario - Especialización Machine Learning</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 20px;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            background: white;
+            border-radius: 20px;
+            box-shadow: 0 20px 40px rgba(0,0,0,0.1);
+            overflow: hidden;
+        }
+
+        .header {
+            background: linear-gradient(135deg, #2c3e50 0%, #3498db 100%);
+            color: white;
+            padding: 30px;
+            text-align: center;
+        }
+
+        .header h1 {
+            font-size: 2.5rem;
+            margin-bottom: 10px;
+            font-weight: 300;
+        }
+
+        .header p {
+            font-size: 1.1rem;
+            opacity: 0.9;
+        }
+
+        .calendar-controls {
+            padding: 20px 30px;
+            background: white;
+            border-bottom: 1px solid #eee;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            flex-wrap: wrap;
+            gap: 15px;
+        }
+
+        .month-nav {
+            display: flex;
+            align-items: center;
+            gap: 20px;
+        }
+
+        .nav-btn {
+            background: #3498db;
+            color: white;
+            border: none;
+            padding: 10px 15px;
+            border-radius: 50%;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            font-size: 1.2rem;
+            width: 45px;
+            height: 45px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .nav-btn:hover {
+            background: #2980b9;
+            transform: scale(1.1);
+        }
+
+        .current-month {
+            font-size: 1.5rem;
+            font-weight: 600;
+            color: #2c3e50;
+            min-width: 200px;
+            text-align: center;
+        }
+
+        .view-toggle {
+            display: flex;
+            gap: 10px;
+        }
+
+        .toggle-btn {
+            background: #ecf0f1;
+            color: #2c3e50;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 25px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            font-weight: 500;
+        }
+
+        .toggle-btn.active {
+            background: #3498db;
+            color: white;
+        }
+
+        .calendar-grid {
+            display: grid;
+            grid-template-columns: repeat(7, 1fr);
+            gap: 1px;
+            background: #ddd;
+            margin: 0 30px 30px 30px;
+            border-radius: 15px;
+            overflow: hidden;
+        }
+
+        .day-header {
+            background: #34495e;
+            color: white;
+            padding: 15px 5px;
+            text-align: center;
+            font-weight: 600;
+            font-size: 0.9rem;
+        }
+
+        .day-cell {
+            background: white;
+            min-height: 120px;
+            padding: 10px 5px;
+            position: relative;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+        .day-cell:hover {
+            background: #f8f9fa;
+        }
+
+        .day-cell.other-month {
+            background: #f8f9fa;
+            color: #bdc3c7;
+        }
+
+        .day-cell.today {
+            background: #e8f4f8;
+            border: 2px solid #3498db;
+        }
+
+        .day-number {
+            font-weight: 600;
+            margin-bottom: 5px;
+            color: #2c3e50;
+        }
+
+        .class-event {
+            background: linear-gradient(135deg, #3498db, #2980b9);
+            color: white;
+            padding: 4px 6px;
+            border-radius: 6px;
+            font-size: 0.75rem;
+            margin-bottom: 2px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            overflow: hidden;
+            white-space: nowrap;
+            text-overflow: ellipsis;
+        }
+
+        .class-event:hover {
+            transform: scale(1.05);
+            box-shadow: 0 3px 10px rgba(52, 152, 219, 0.4);
+        }
+
+        .list-view {
+            display: none;
+            padding: 30px;
+        }
+
+        .month-section {
+            margin-bottom: 40px;
+        }
+
+        .month-title {
+            font-size: 1.8rem;
+            color: #2c3e50;
+            margin-bottom: 20px;
+            padding-bottom: 10px;
+            border-bottom: 3px solid #3498db;
+        }
+
+        .class-list {
+            display: grid;
+            gap: 15px;
+        }
+
+        .class-item {
+            background: white;
+            padding: 20px;
+            border-radius: 15px;
+            box-shadow: 0 5px 15px rgba(0,0,0,0.08);
+            border-left: 5px solid #3498db;
+            transition: all 0.3s ease;
+        }
+
+        .class-item:hover {
+            transform: translateX(5px);
+            box-shadow: 0 8px 25px rgba(0,0,0,0.15);
+        }
+
+        .class-date {
+            font-size: 1.1rem;
+            font-weight: 600;
+            color: #2c3e50;
+            margin-bottom: 5px;
+        }
+
+        .class-details {
+            color: #7f8c8d;
+            font-size: 0.9rem;
+        }
+
+        .modal {
+            display: none;
+            position: fixed;
+            z-index: 1000;
+            left: 0;
+            top: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0,0,0,0.5);
+            backdrop-filter: blur(5px);
+        }
+
+        .modal-content {
+            background-color: white;
+            margin: 5% auto;
+            padding: 30px;
+            border-radius: 20px;
+            width: 90%;
+            max-width: 500px;
+            box-shadow: 0 20px 40px rgba(0,0,0,0.2);
+            animation: modalSlideIn 0.3s ease;
+        }
+
+        @keyframes modalSlideIn {
+            from { transform: translateY(-50px); opacity: 0; }
+            to { transform: translateY(0); opacity: 1; }
+        }
+
+        .close {
+            color: #aaa;
+            float: right;
+            font-size: 28px;
+            font-weight: bold;
+            cursor: pointer;
+            transition: color 0.3s ease;
+        }
+
+        .close:hover {
+            color: #e74c3c;
+        }
+
+        .modal h2 {
+            color: #2c3e50;
+            margin-bottom: 20px;
+        }
+
+        .modal-info {
+            margin-bottom: 15px;
+            padding: 10px 0;
+            border-bottom: 1px solid #ecf0f1;
+        }
+
+        .modal-info:last-child {
+            border-bottom: none;
+        }
+
+        .modal-info strong {
+            color: #3498db;
+        }
+
+        @media (max-width: 768px) {
+            .header h1 {
+                font-size: 2rem;
+            }
+
+            .calendar-controls {
+                padding: 15px 20px;
+                flex-direction: column;
+                gap: 20px;
+            }
+
+            .current-month {
+                font-size: 1.3rem;
+            }
+
+            .calendar-grid {
+                margin: 0 20px 20px 20px;
+            }
+
+            .day-cell {
+                min-height: 80px;
+                padding: 5px 3px;
+            }
+
+            .class-event {
+                font-size: 0.7rem;
+                padding: 2px 4px;
+            }
+
+            .list-view {
+                padding: 20px;
+            }
+
+            .modal-content {
+                margin: 10% auto;
+                padding: 20px;
+            }
+        }
+
+        @media (max-width: 480px) {
+            body {
+                padding: 10px;
+            }
+
+            .day-header {
+                padding: 10px 2px;
+                font-size: 0.8rem;
+            }
+
+            .day-cell {
+                min-height: 60px;
+                padding: 3px 2px;
+            }
+
+            .day-number {
+                font-size: 0.8rem;
+            }
+
+            .class-event {
+                font-size: 0.6rem;
+                padding: 1px 3px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>Especialización en Machine Learning</h1>
+            <p>Cronograma de Clases 2025</p>
+        </div>
+
+        <div class="calendar-controls">
+            <div class="month-nav">
+                <button class="nav-btn" onclick="previousMonth()">‹</button>
+                <div class="current-month" id="currentMonth"></div>
+                <button class="nav-btn" onclick="nextMonth()">›</button>
+            </div>
+            <div class="view-toggle">
+                <button class="toggle-btn active" onclick="switchView('calendar')">Calendario</button>
+                <button class="toggle-btn" onclick="switchView('list')">Lista</button>
+            </div>
+        </div>
+
+        <div id="calendarView">
+            <div class="calendar-grid" id="calendarGrid"></div>
+        </div>
+
+        <div id="listView" class="list-view"></div>
+    </div>
+
+    <div id="eventModal" class="modal">
+        <div class="modal-content">
+            <span class="close">&times;</span>
+            <h2>Detalles de la Clase</h2>
+            <div id="modalContent"></div>
+        </div>
+    </div>
+
+    <script>
+        // Datos de las clases
+        const classData = [
+            { date: '2025-05-29', module: 1, hours: 4, class: 1 },
+            { date: '2025-05-30', module: 1, hours: 4, class: 2 },
+            { date: '2025-06-03', module: 2, hours: 1, class: 3 },
+            { date: '2025-06-05', module: 2, hours: 4, class: 4 },
+            { date: '2025-06-10', module: 2, hours: 4, class: 5 },
+            { date: '2025-06-12', module: 2, hours: 4, class: 6 },
+            { date: '2025-06-13', module: 2, hours: 4, class: 7 },
+            { date: '2025-06-17', module: 3, hours: 2, class: 8 },
+            { date: '2025-06-19', module: 3, hours: 4, class: 9 },
+            { date: '2025-06-24', module: 3, hours: 4, class: 10 },
+            { date: '2025-06-26', module: 3, hours: 4, class: 11 },
+            { date: '2025-06-27', module: 3, hours: 4, class: 12 },
+            { date: '2025-07-01', module: 4, hours: 2, class: 13 },
+            { date: '2025-07-03', module: 4, hours: 4, class: 14 },
+            { date: '2025-07-04', module: 4, hours: 4, class: 15 },
+            { date: '2025-07-08', module: 4, hours: 4, class: 16 },
+            { date: '2025-07-10', module: 4, hours: 4, class: 17 },
+            { date: '2025-07-11', module: 5, hours: 2, class: 18 },
+            { date: '2025-07-15', module: 5, hours: 4, class: 19 },
+            { date: '2025-07-17', module: 5, hours: 4, class: 20 },
+            { date: '2025-07-18', module: 5, hours: 4, class: 21 },
+            { date: '2025-07-22', module: 5, hours: 4, class: 22 },
+            { date: '2025-07-24', module: 5, hours: 4, class: 23 },
+            { date: '2025-07-25', module: 5, hours: 4, class: 24 },
+            { date: '2025-07-29', module: 5, hours: 4, class: 25 },
+            { date: '2025-07-31', module: 6, hours: 4, class: 26 },
+            { date: '2025-08-01', module: 6, hours: 4, class: 27 },
+            { date: '2025-08-05', module: 6, hours: 4, class: 28 },
+            { date: '2025-08-07', module: 6, hours: 2, class: 29 },
+            { date: '2025-08-08', module: 6, hours: 4, class: 30 },
+            { date: '2025-08-12', module: 7, hours: 4, class: 31 },
+            { date: '2025-08-14', module: 7, hours: 4, class: 32 },
+            { date: '2025-08-19', module: 7, hours: 4, class: 33 },
+            { date: '2025-08-21', module: 7, hours: 4, class: 34 },
+            { date: '2025-08-22', module: 7, hours: 4, class: 35 },
+            { date: '2025-08-26', module: 7, hours: 3, class: 36 },
+            { date: '2025-08-28', module: 7, hours: 4, class: 37 },
+            { date: '2025-08-29', module: 8, hours: 4, class: 38 },
+            { date: '2025-09-02', module: 8, hours: 4, class: 39 },
+            { date: '2025-09-04', module: 8, hours: 4, class: 40 },
+            { date: '2025-09-05', module: 8, hours: 2, class: 41 },
+            { date: '2025-09-09', module: 8, hours: 4, class: 42 },
+            { date: '2025-09-12', module: 9, hours: 4, class: 43 },
+            { date: '2025-09-23', module: 9, hours: 4, class: 44 },
+            { date: '2025-09-25', module: 9, hours: 4, class: 45 },
+            { date: '2025-09-26', module: 10, hours: 4, class: 46 },
+            { date: '2025-09-30', module: 10, hours: 4, class: 47 },
+            { date: '2025-10-02', module: 10, hours: 3, class: 48 },
+            { date: '2025-10-03', module: 11, hours: 4, class: 49 },
+            { date: '2025-10-07', module: 11, hours: 4, class: 50 },
+            { date: '2025-10-09', module: 11, hours: 4, class: 51 },
+            { date: '2025-10-10', module: 12, hours: 4, class: 52 },
+            { date: '2025-10-14', module: 12, hours: 4, class: 53 },
+            { date: '2025-10-16', module: 12, hours: 1, class: 54 }
+        ];
+
+        let currentDate = new Date();
+        let currentView = 'calendar';
+        const monthNames = ['Enero', 'Febrero', 'Marzo', 'Abril', 'Mayo', 'Junio',
+                           'Julio', 'Agosto', 'Septiembre', 'Octubre', 'Noviembre', 'Diciembre'];
+        const dayNames = ['Lun', 'Mar', 'Mié', 'Jue', 'Vie', 'Sáb', 'Dom'];
+
+        function init() {
+            // Usar la fecha de hoy en lugar de forzar mayo 2025
+            currentDate = new Date();
+            renderCalendar();
+            renderListView();
+            
+            // Event listeners
+            document.querySelector('.close').addEventListener('click', closeModal);
+            window.addEventListener('click', function(event) {
+                if (event.target === document.getElementById('eventModal')) {
+                    closeModal();
+                }
+            });
+        }
+
+        function renderCalendar() {
+            const year = currentDate.getFullYear();
+            const month = currentDate.getMonth();
+            
+            document.getElementById('currentMonth').textContent = 
+                `${monthNames[month]} ${year}`;
+            
+            const firstDay = new Date(year, month, 1);
+            const lastDay = new Date(year, month + 1, 0);
+            const startDate = new Date(firstDay);
+            // Ajustar para que la semana comience en lunes
+            const dayOfWeek = firstDay.getDay();
+            const mondayOffset = dayOfWeek === 0 ? -6 : -(dayOfWeek - 1);
+            startDate.setDate(startDate.getDate() + mondayOffset);
+            
+            const grid = document.getElementById('calendarGrid');
+            grid.innerHTML = '';
+            
+            // Headers
+            dayNames.forEach(day => {
+                const header = document.createElement('div');
+                header.className = 'day-header';
+                header.textContent = day;
+                grid.appendChild(header);
+            });
+            
+            // Calendar days
+            const today = new Date();
+            for (let i = 0; i < 42; i++) {
+                const currentDateIterator = new Date(startDate);
+                currentDateIterator.setDate(startDate.getDate() + i);
+                
+                const dayCell = document.createElement('div');
+                dayCell.className = 'day-cell';
+                
+                if (currentDateIterator.getMonth() !== month) {
+                    dayCell.classList.add('other-month');
+                }
+                
+                if (currentDateIterator.toDateString() === today.toDateString()) {
+                    dayCell.classList.add('today');
+                }
+                
+                const dayNumber = document.createElement('div');
+                dayNumber.className = 'day-number';
+                dayNumber.textContent = currentDateIterator.getDate();
+                dayCell.appendChild(dayNumber);
+                
+                // Add classes for this day
+                const dateString = currentDateIterator.toISOString().split('T')[0];
+                const classesForDay = classData.filter(cls => cls.date === dateString);
+                
+                classesForDay.forEach(cls => {
+                    const event = document.createElement('div');
+                    event.className = 'class-event';
+                    event.textContent = `M${cls.module} - ${cls.hours}h`;
+                    event.addEventListener('click', () => showEventModal(cls));
+                    dayCell.appendChild(event);
+                });
+                
+                grid.appendChild(dayCell);
+            }
+        }
+
+        function renderListView() {
+            const listView = document.getElementById('listView');
+            listView.innerHTML = '';
+            
+            // Group classes by month
+            const classesByMonth = {};
+            classData.forEach(cls => {
+                const date = new Date(cls.date);
+                const monthKey = `${date.getFullYear()}-${date.getMonth()}`;
+                if (!classesByMonth[monthKey]) {
+                    classesByMonth[monthKey] = [];
+                }
+                classesByMonth[monthKey].push(cls);
+            });
+            
+            Object.keys(classesByMonth).forEach(monthKey => {
+                const [year, month] = monthKey.split('-');
+                const monthSection = document.createElement('div');
+                monthSection.className = 'month-section';
+                
+                const monthTitle = document.createElement('h3');
+                monthTitle.className = 'month-title';
+                monthTitle.textContent = `${monthNames[parseInt(month)]} ${year}`;
+                monthSection.appendChild(monthTitle);
+                
+                const classList = document.createElement('div');
+                classList.className = 'class-list';
+                
+                classesByMonth[monthKey].forEach(cls => {
+                    const classItem = document.createElement('div');
+                    classItem.className = 'class-item';
+                    classItem.addEventListener('click', () => showEventModal(cls));
+                    
+                    const date = new Date(cls.date);
+                    const dateStr = date.toLocaleDateString('es-ES', {
+                        weekday: 'long',
+                        year: 'numeric',
+                        month: 'long',
+                        day: 'numeric'
+                    });
+                    
+                    classItem.innerHTML = `
+                        <div class="class-date">${dateStr}</div>
+                        <div class="class-details">
+                            Módulo ${cls.module} - Clase ${cls.class} - ${cls.hours} horas
+                        </div>
+                    `;
+                    
+                    classList.appendChild(classItem);
+                });
+                
+                monthSection.appendChild(classList);
+                listView.appendChild(monthSection);
+            });
+        }
+
+        function showEventModal(classInfo) {
+            const modal = document.getElementById('eventModal');
+            const content = document.getElementById('modalContent');
+            
+            const date = new Date(classInfo.date);
+            const dateStr = date.toLocaleDateString('es-ES', {
+                weekday: 'long',
+                year: 'numeric',
+                month: 'long',
+                day: 'numeric'
+            });
+            
+            const endTime = 19 + classInfo.hours;
+            const endTimeStr = endTime > 23 ? '23:00' : `${endTime}:00`;
+            
+            content.innerHTML = `
+                <div class="modal-info">
+                    <strong>Fecha:</strong> ${dateStr}
+                </div>
+                <div class="modal-info">
+                    <strong>Horario:</strong> 19:00 - ${endTimeStr}
+                </div>
+                <div class="modal-info">
+                    <strong>Módulo:</strong> ${classInfo.module}
+                </div>
+                <div class="modal-info">
+                    <strong>Clase:</strong> ${classInfo.class}
+                </div>
+                <div class="modal-info">
+                    <strong>Duración:</strong> ${classInfo.hours} horas
+                </div>
+                <div class="modal-info">
+                    <strong>Tutor:</strong> Silvia Salinas
+                </div>
+                <div class="modal-info">
+                    <strong>Asistente:</strong> Nicolás Galvez
+                </div>
+                <div class="modal-info">
+                    <strong>Ubicación:</strong> Botic 23
+                </div>
+            `;
+            
+            modal.style.display = 'block';
+        }
+
+        function closeModal() {
+            document.getElementById('eventModal').style.display = 'none';
+        }
+
+        function previousMonth() {
+            currentDate.setMonth(currentDate.getMonth() - 1);
+            renderCalendar();
+        }
+
+        function nextMonth() {
+            currentDate.setMonth(currentDate.getMonth() + 1);
+            renderCalendar();
+        }
+
+        function switchView(view) {
+            currentView = view;
+            const calendarView = document.getElementById('calendarView');
+            const listView = document.getElementById('listView');
+            const buttons = document.querySelectorAll('.toggle-btn');
+            
+            buttons.forEach(btn => btn.classList.remove('active'));
+            
+            if (view === 'calendar') {
+                calendarView.style.display = 'block';
+                listView.style.display = 'none';
+                buttons[0].classList.add('active');
+            } else {
+                calendarView.style.display = 'none';
+                listView.style.display = 'block';
+                buttons[1].classList.add('active');
+            }
+        }
+
+        // Initialize the calendar
+        init();
+    </script>
+</body>
+</html>
